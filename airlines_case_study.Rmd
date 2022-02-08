@@ -1,0 +1,127 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+The data set can be found at https://www.kaggle.com/akulbahl/covid19-airline-flight-delays-and-cancellations
+The following chunk must be run first to enter the necessary libraries to execute this code.
+
+```{r Libraries, include=FALSE}
+#Enter the names of packages
+packages = c("tidyverse", "ggplot2")
+
+## Now load or install&load all
+package.check <- lapply(
+  packages,
+  FUN = function(x) {
+    if (!require(x, character.only = TRUE)) {
+      install.packages(x, dependencies = TRUE)
+      library(x, character.only = TRUE)
+    }
+  }
+)
+```
+
+
+
+Q.1 Τhe number of flights each month in descending order
+```{r}
+covid%>%
+  group_by(MONTH)%>%tally(sort=TRUE)
+```
+
+Q.2 Which day during the recording period there were the most delays
+```{r}
+covid%>%
+  filter(ARR_DELAY>0)%>%group_by(MONTH,DAY_OF_MONTH)%>%tally(sort = TRUE)%>%head(1)
+
+```
+
+Q.3 Which airport had the most arrivals between 12.00-14.00)
+```{r}
+covid%>%
+  filter(ARR_TIME>=1200 & ARR_TIME<=1400)%>%
+  group_by(DEST)%>%tally(sort=TRUE)%>%head(1)
+
+```
+
+Q.4 The flight with the maximum distance and its average delay in minutes (ARR_DELAY> 0) for the entire recording time
+```{r}
+covid%>%summarise(result=max(DISTANCE))->tmp
+covid%>%filter(DISTANCE==tmp$result[1],ARR_DELAY>0)%>%summarise(avg_delay=mean(ARR_DELAY))
+```
+
+Q.5 Show with a scatterplot the average daily delay of each air carrier where each point is colored based on the category of air carrier with a horizontal axis on the days of the month and a vertical axis the average delay value. The months should be divided into panels
+```{r}
+covid%>%
+  group_by(MONTH,DAY_OF_MONTH,MKT_UNIQUE_CARRIER)%>%
+  summarise(avg_delay=mean(ARR_DELAY))%>%print()%>%
+  ggplot(aes(x=DAY_OF_MONTH,y=avg_delay,color=MKT_UNIQUE_CARRIER))+geom_point()+facet_grid(~MONTH)
+
+```
+
+Q.6 Show with a stacked histogram the reasons for flight cancellation for each day of the month in panels per month
+```{r}
+covid%>%filter(CANCELLED==1)%>%     
+  ggplot(aes(x=DAY_OF_MONTH,fill=CANCELLATION_CODE))+geom_histogram()+facet_grid(~MONTH)
+
+```
+
+Q.7 What was the route (flight) with the most type D cancellations (display MKT_UNIQUE_CARRIER column information as DEST_STATE_NM)
+```{r}
+covid%>%
+  filter(CANCELLATION_CODE=="D")%>%
+  group_by(MKT_CARRIER_FL_NUM)%>%
+  tally(sort = TRUE)->tmp
+covid%>%filter(MKT_CARRIER_FL_NUM==tmp$MKT_CARRIER_FL_NUM[1])%>%select(MKT_UNIQUE_CARRIER:DEST_STATE_NM)%>%head(1)
+  
+  
+```
+
+Q.8 The most popular destination (total number of flights). For this destination and for each air carrier and for the recording period (per day and per month) visualize the delays of its routes (axis x day of the month, axis π delay time, panel grid month ~ carrier)
+```{r}
+covid%>%
+ group_by(DEST_CITY_NAME)%>%
+  tally(sort=TRUE)%>%head(1)->tmp
+tmp
+covid%>%filter(DEST_CITY_NAME==tmp$DEST_CITY_NAME,ARR_DELAY>0)%>%
+  ggplot(aes(x=DAY_OF_MONTH,y=ARR_DELAY))+geom_point()+facet_grid(MONTH~MKT_UNIQUE_CARRIER)
+
+```
+
+Q.9 Which were the 6 airports that had the most traffic during the months January-February? (Total number of flights). Visualize the traffic of their routes for the 5 respective most popular airlines (horizontal axis day, vertical axis scheduled departure time, color carrier base, grid panel based on full airport and month name)
+
+```{r}
+ covid%>%filter(MONTH==1 | MONTH==2)%>%
+  group_by(DEST)%>%
+  tally(sort = TRUE)%>%
+  head(6)->d
+d$DEST
+covid%>%
+  filter(MONTH==1 | MONTH==2, DEST %in% d$DEST)%>%
+  group_by(MKT_UNIQUE_CARRIER)%>%
+  tally(sort = TRUE)%>%
+  head(5)->dd
+covid%>%
+  filter(MONTH==1 | MONTH==2, DEST %in% d$DEST, MKT_UNIQUE_CARRIER %in% dd$MKT_UNIQUE_CARRIER)%>%
+  ggplot(aes(x=DAY_OF_MONTH,y=DEP_TIME,color=MKT_UNIQUE_CARRIER))+geom_point()+facet_grid(MONTH~DEST)
+
+```
+
+
+
+Q.10 Find for each company the total number of flights canceled during the period March-May. If we consider that each flight can accommodate 200 passengers and that the ticket is 100 euros to find the total cost. Also visualize for each company the loss of revenue (horizontal axis company, vertical axis loss of revenue, grid panel ~ carrier)
+```{r}
+covid%>%
+  filter(MONTH>=3 & MONTH<=5,CANCELLED==1)%>%
+  group_by(MKT_UNIQUE_CARRIER)%>%
+  tally()%>%
+  mutate(cost=n*200*100)%>%
+  print(cost)
+```
+
+
+
+
+
+

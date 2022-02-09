@@ -7,7 +7,7 @@ This dataset tracks the on-time performance of flights operated by large air car
 # Exploratory Data Analysis
 In this project an attempt is made to make a brief EDA of the above dataset. Through the use of the r language and some of its packages (tidyverse, ggplot2) the following questions are answered:
 
-1. Which is the number of flights each month in descending order?
+1.  Which was the number of flights each month in descending order?
 2.  Which day during the recording period there were the most delays?
 3.  Which airport had the most arrivals between 12.00-14.00)?
 4.  Which was the flight with the maximum distance and  how was its average delay in minutes?
